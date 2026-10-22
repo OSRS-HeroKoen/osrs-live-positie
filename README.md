@@ -1,26 +1,36 @@
-# Live Positie (RuneLite-plugin)
+# Live Positie (RuneLite plugin)
 
-Kleine RuneLite-plugin die jouw positie in het spel (x, y, verdieping) doorgeeft aan de kaart van **OSRS Companion**.
+**NL** – Kleine RuneLite-plugin die jouw positie in het spel (x, y, verdieping) doorgeeft aan de kaart van de app *OSRS Companion*, zodat je live ziet waar je bent.
 
-- Luistert alleen op `127.0.0.1:37780`, dus alleen deze computer kan erbij.
-- Stuurt niets naar internet en verzamelt niets.
-- Spreekt hetzelfde berichtformaat als de kaart in de app: `{"type":"position","x":..,"y":..,"plane":..}`.
-- Instances worden gemeld als `instanced: true`; de kaart toont die plek dan niet.
+**EN** – Small RuneLite plugin that exposes the local player's position (x, y, plane) on this computer only, so a companion app's map can show where you are.
 
-## Het bestand krijgen
+## Wat de plugin doet / What it does
 
-GitHub bouwt de plugin vanzelf zodra er iets is gepusht. Het bestand `osrs-live-positie.jar` staat bij **Releases → Live Positie (laatste)** (en bij Actions als artifact).
+- Opens a WebSocket server on `127.0.0.1:37780` (loopback only, not reachable from other machines).
+- Sends `{"type":"position","x":..,"y":..,"plane":..,"regionId":..,"world":..,"instanced":..,"timestamp":..}` on position change (and at most every 5 s while standing still), `{"type":"welcome",...}` on connect and `{"type":"logout"}` on logout or world hop.
+- Accepts connections only with `Host` `127.0.0.1`/`localhost` and an `Origin` that is empty, `null`, `file://` or `http://localhost`/`127.0.0.1`. Other websites are refused (403).
+- Reads nothing else from the game: no inventory, no chat, no account data. Sends nothing to the internet. Sends no data on its own initiative to anything other than local clients that connect.
+- No external libraries (JDK sockets only).
 
-## Installeren (Windows)
+## Installeren / Install
 
-1. Maak deze map aan als hij er nog niet is: `C:\Users\<jouw naam>\.runelite\sideloaded-plugins`
-2. Zet `osrs-live-positie.jar` in die map.
-3. Start RuneLite met de optie **`--developer-mode`**. Het eenvoudigst: maak een snelkoppeling naar `RuneLite.exe` en zet achter het pad in het veld "Doel" een spatie en `--developer-mode`. Via de RuneLite-launcher kan het ook onder **Configure → Client arguments**.
-4. In RuneLite: open de plugin-lijst (moersleutel), zoek **Live Positie** en zet hem aan.
-5. Log in op het spel en klik in OSRS Companion bij de kaart op **Live positie**.
+Via de **Plugin Hub** in RuneLite (moersleutel → Plugin Hub → zoek *Live Positie*), zodra de plugin daar is goedgekeurd. Werkt ook met de Jagex Launcher.
 
-## Problemen
+Sideloaden (`--developer-mode`) werkt **niet** met de Jagex Launcher; gebruik de Plugin Hub.
 
-- *De plugin staat niet in de lijst:* RuneLite is niet met `--developer-mode` gestart, of het bestand staat in de verkeerde map.
-- *De kaart zegt "Niet verbonden":* de plugin staat uit, of een andere plugin gebruikt poort 37780 al (zet RuneRadar uit).
-- *Bouwen mislukt:* kijk bij het tabblad **Actions** en stuur de foutmelding.
+## Gebruik
+
+1. Zet de plugin aan en log in op het spel.
+2. Open OSRS Companion, ga naar de kaart en klik op **Live positie**.
+
+## Bouwen / Build
+
+```
+./gradlew build
+```
+
+Het resultaat staat in `build/libs/osrs-live-positie.jar`.
+
+## Licentie
+
+BSD 2-Clause, zie `LICENSE`.

@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Minimale WebSocket-server die alleen op 127.0.0.1 luistert en tekstberichten naar de app stuurt.
@@ -30,6 +33,13 @@ public class PositionServer
 	private volatile ServerSocket server;
 	private volatile boolean running;
 	private volatile String lastMessage;
+	/** Eén aparte draad voor het versturen, zodat de speldraad nooit op het netwerk wacht. */
+	private final ExecutorService sender = Executors.newSingleThreadExecutor(r ->
+	{
+		Thread t = new Thread(r, "osrs-live-positie-send");
+		t.setDaemon(true);
+		return t;
+	});
 
 	public PositionServer(int port)
 	{
@@ -68,6 +78,7 @@ public class PositionServer
 			c.close();
 		}
 		clients.clear();
+		sender.shutdownNow();
 	}
 
 	/** Stuurt een bericht naar alle verbonden apps. Een positie wordt bewaard voor nieuwe verbindingen. */
@@ -77,9 +88,18 @@ public class PositionServer
 		{
 			lastMessage = json;
 		}
-		for (Client c : clients)
+		try
 		{
-			c.send(json);
+			sender.execute(() ->
+			{
+				for (Client c : clients)
+				{
+					c.send(json);
+				}
+			});
+		}
+		catch (RejectedExecutionException ignored)
+		{
 		}
 	}
 
